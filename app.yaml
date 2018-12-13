@@ -2,8 +2,8 @@ runtime: php72
 
 handlers:
 # Serve a directory as a static resource.
-- url: /stylesheets
-  static_dir: stylesheets
+- url: /(.+\.css)$
+  static_files: \1
 
 
 # Serve images as static resources.
@@ -12,5 +12,5 @@ handlers:
   upload: .+\.(gif|png|jpg)$
 
 # Serve your app through a front controller at index.php or public/index.php.
-- url: .*
-  script: auto
+- url: /.*
+  script: index.php
