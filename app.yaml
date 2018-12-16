@@ -4,6 +4,8 @@ handlers:
 # Serve a directory as a static resource.
 - url: /(.+\.css)$
   static_files: \1
+  upload: .+\.css$
+  
 
 
 # Serve images as static resources.
@@ -13,4 +15,4 @@ handlers:
 
 # Serve your app through a front controller at index.php or public/index.php.
 - url: /.*
-  script: index.php
+  script: auto
