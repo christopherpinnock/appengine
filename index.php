@@ -1,10 +1,18 @@
-
+<?php
+if(@parse_url($_SERVER['REQUEST_URI'])['path']=='/process_message.php') {
+	require  'process_message.php';
+	exit;
+	
+}
+?>
 <!doctype html>
 <html class="max-h" lang="en">
 	<head>
 		<meta charset="UTF-8">
+		<meta name="Description" content="Responsive Web template">
+		<meta name="Keywords" content="Web template, responsive template, mobile friendly template">
 		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-		<link rel="stylesheet" href="/css/styles.css">
+		<link rel="stylesheet" href="/css/styles.css?=1">
 		<!-- Bootstrap CSS <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">-->
         
 	    <title>Hello World</title>
@@ -13,7 +21,7 @@
 	<body class="max-h rel-pos">
 		<script type="text/javascript">
 			<!--
-			var mob=!/(mobi|android)/i.test(navigator.userAgent);//Check if mobile
+			var mob=/(mobi|android)/i.test(navigator.userAgent);//Check if mobile
 			//Insert mobile stylesheet with responsive styling if user is on mobile
 			(function(d,m){
 				if(m){
@@ -23,6 +31,9 @@
 				    s.href = '/css/mobile.css';
 				    t.parentNode.insertBefore(s,t);
 				}
+				String.prototype.capitalize=function(){//Capitalize first letter of string
+					return this.charAt(0).toUpperCase() + this.slice(1);
+                }
 			})(document,mob);
 			//-->
 		</script>
@@ -97,9 +108,11 @@
 				    menu = doc.getElementById('link-container');
 				    scrn = doc.getElementById('scrn');
 				    addClickTouchListener(doc.querySelector('#scrn'), function(e){//Clicks/touches black screen
+				    	e.stopPropagation();
 				    	hideMenu();
 				    });
 				    addClickTouchListener(doc.querySelector('#get-main-menu'), function(e){//Menu icon; show dropdown lists of links
+				    	e.stopPropagation();
 				    	menu.style.display = 'block';
 				    	scrn.style.display = 'block';
 				    	body.style.overflow = 'hidden';
@@ -121,27 +134,24 @@
 			    //Get links and add touchstart/click events
 			    links=doc.querySelectorAll('.main-link');
 			    for(i = 0; i < links.length; i++){//Add click event to main link
-			    	addClickTouchListener(links[i], function(e){
+			        addClickTouchListener(links[i], function(e){
 			    		e.stopPropagation();
-			    		//Touchstart/click events might fire twice on devices
-			    		//that support both so check event type
+			    		//Only set handler if start/end positions are the same
+			    		//This prevents trigger of handle if user swipes/scroll
 			    		if(e.type == 'touchstart'){
-			    			handleEv();
+			    			var touch = e.targetTouches,//List of touches
+			    			positionX = touch[touch.length-1].pageX;//Start position
+			    			//Add touch events to DOM that has touchstart event attached
+			    			e.target.ontouchend = function(e){
+			    				var endTouch = e.targetTouches;
+			    				if(endTouch[endTouch.length-1].pageX == positionX){//Set handler if start/end positions are the same
+			    					handleEv(e);
+			    				}
+			    			}
 			    		}else{
-			    			handleEv();
+			    			handleEv(e)
 			    		}
-			    		function handleEv(){//Check for pushState support and update page content
-					    	if(pushState){
-					    		e.preventDefault();
-			    		        link = e.target;
-					            var href = link.href;
-					            path = currentFile(href, 1, 1);				    
-					            history.pushState({'page' : path}, '', href);//Add current uri to browser's history stack
-					            activeLink(link);//Add respective content and hightlight current link
-					            popState=true;//User sets browser's history
-					        }
-					    }
-			        });
+			    	});
 			    }
 			    //Add popstate event if supported
 			    if(pushState){
@@ -214,15 +224,23 @@
 				    	hideMenu();
 					}
 			    }
+			    function handleEv(e){//Handles .main-link events
+			    	//Check for pushState support and update page content
+					if(pushState){
+						e.preventDefault();
+						link = e.target;
+					    var href = link.href;
+					    path = currentFile(href, 1, 1);				    
+					    history.pushState({'page' : path}, '', href);//Add current uri to browser's history stack
+					    activeLink(link);//Add respective content and hightlight current link
+					    popState=true;//User sets browser's history
+					}
+			    }
 			    /*Adds device specific event (s)
 			    @param (el) - DOM element that event will be added to
 			    @param (listener) - function call back function*/
 			    function addClickTouchListener(el, listener){
-			    	if(mob){
-			    		el.onclick = ontouchstart = listener;
-			    	}else{
-			    		el.onclick = listener;
-			    	}
+			    	el.onclick = ontouchstart = listener;
 			    }
 			    currentFile(link, '', 1);
 			})({
@@ -250,11 +268,11 @@
 					var l = this;
 					l.mainContent().innerHTML = l.nonDeScript;
 				},
-				services:function(){
+				services : function(){
 					var l = this;
 					l.mainContent().innerHTML = l.nonDeScript;
 				},
-				gallery:function(){
+				gallery : function(){
 					var j = 0,t = 1, temp = null, l=this, doc=l.doc, photos=l.photos,len = photos.length,u=l.mainContent(), g='';
                     for(i = len - 1; i > 0; i -= 1){
                     	j = Math.floor(Math.random() * (i + 1))//Random array index
@@ -284,7 +302,7 @@
 					var l = this;
 					l.mainContent().innerHTML = l.nonDeScript;
 				},
-				contact:function(){
+				contact : function(){
 					var l = this, fields,
 					doc=l.doc , c, form, btn,
 					contactFieldsBorder, inputs,
@@ -309,7 +327,7 @@
 						c = c + '';
 						var input = doc.createElement('div');
 						var h = fields[c];
-						var title;
+						var val;
 						var q = '';
 						var currentField;
 						input.className = 'form-fields-container form-fields pad color rel-pos';
@@ -318,9 +336,9 @@
 						}
 						q += '<div class="';
 						if(c == 'captcha'){
-							title = h.title(1,99);
+							val = h.val(1,99);
 						}else{
-							title = h.title;
+							val = h.val.capitalize();
 						}
 						q += c == 'message' ? c : 'input';
 						q += '-sub-wrapper"><';
@@ -329,11 +347,11 @@
 						q += c;
 						q += '" name="' + c + '"';
 						if(c != 'message'){
-							q += ' value="' + title +'"'; 
+							q += ' value="' + val +'"'; 
 						}
 						q += '>';
 						if(c == 'message'){
-						 	q += title + '</textarea>';
+						 	q += val + '</textarea>';
 						 }
 						q += '</div><div class="err" id="';
 						q += c;
@@ -347,77 +365,88 @@
 							txtLen.innerHTML = 'Min. characters: <span class="inline-block" id="' + c + '-len">50</span>';
 							form.appendChild(txtLen);
 						}
-						currentField = doc.getElementById(c);
+						currentField = doc.getElementById(c);//Get just-attached form field
 						currentField.onfocus = function(){
+							//Fields outline is disabled and border set to 0. As a result, fields wrapper border
+							//masquerade as fields border
+							//Wrapper border highlighted on hover/focus dynamically
 							var elem = this,
-							y = sortTitle(elem.id + ''),
-							wrapper = elem.parentNode; 
-							contactFieldsBorder = wrapper.parentNode;
-							contactFieldsBorder.style.borderColor = '#808080';
-							if(elem.value.toLowerCase() == y.toLowerCase()){
+							y = sortVal(elem.id + ''),//Use element id to field-specific title
+							wrapper = elem.parentNode; //Immediate parent of form field (see use immediately below)
+							contactFieldsBorder = wrapper.parentNode;//Element for border change
+							contactFieldsBorder.style.borderColor = '#808080';//Highlight wrapper border color
+							//Set value to empty if field value==default value and change font color to black
+							if(elem.value.toLowerCase() == y){
 								elem.value = '';
 								elem.style.color = '#000000';
 							}
-							
 						}
 						currentField.onblur = function(){
 							var elem = this,
 							val = elem.value.toLowerCase(),
 							f = elem.id + '',
-							y = sortTitle(f);
-							contactFieldsBorder.style.borderColor = '#c0c0c0';
-							if(val == '' || val == y.toLowerCase()){
+							y = sortVal(f);
+							contactFieldsBorder.style.borderColor = '#c0c0c0';//Set wrapper border color to default
+							if(val == '' || val == y){//Set to default color/value if value is empty/default 
 								elem.value = y;
 								elem.style.color='#acacac';
+                                //Update strLen container with defaults if message field 
 								if(f == 'message'){
 									var txtLen = doc.getElementById(f + '-len');
 								    txtLen.style.color = '#acacac';
 								    txtLen.innerHTML = '50';
 								}
 							}else{
+								//Check for and display error
 								var err = fields[f].validate(val);
 								if(err){
 									doc.getElementById(f + '-err').innerHTML = err;
 								}
-								if(f == 'message'){
+								if(f == 'message'){//Update current strLen if message field 
 									checkMessageLen(f,val);
 								}
 							}
 						}
 					}
-					form.appendChild(btn);
-					doc.getElementById('contact-form').onsubmit = function (e){//Submit form data to server with ajax
+					form.appendChild(btn);//Append button to end of form
+					//Form submitted with ajax
+					doc.getElementById('contact-form').onsubmit = function (e){
 						e.preventDefault();
 						disableBtn();//Disable submit button
 						//Append sending of message update to contact form
 						var b = doc.getElementById('contact-form'),
+						xhr = new XMLHttpRequest() || new ActiveXObject('Microsoft.XMLHTTP'), 
+						data = l.send,//Object with form values
 						sending = doc.createElement('span');
 						sending.id = 'message-notifier';
 						sending.className = 'abs-pos';
 						sending.style.padding = '';
 						sending.innerHTML = '<span id="message-notifier-sub-container" style="padding:4px 8px;margin-left:-50%;" class="inline-block center white-color blu-bg">Sending...</span>';
 						b.appendChild(sending);
-						var xhr = new XMLHttpRequest() || new ActiveXObject('Microsoft.XMLHTTP'), data = l.send;
-						 data = Object.keys(data).map(function(k){
-						 	return l.encodeData(k) + '=' + l.encodeData(data[k]) 
+						//Set query str as property = value and encode before data is 
+						//sent to server
+						data = Object.keys(data).map(function(k){
+						 	return l.encodeData(k) + '=' + l.encodeData(data[k]);
     		 	         }).join('&');
     		 	         xhr.open('POST',location.protocol + '//' + location.hostname + '/process_message.php',true);
     		 	         xhr.onreadystatechange = function(){
     		 	         	if(xhr.readyState > 3 && xhr.status == 200){ 
     		 	         		var resp = xhr.responseText.trim(),
-    		 	         		v = doc.getElementById('message-notifier-sub-container');
-    		 	         		if(resp == 'sent'){
+    		 	         		v = doc.getElementById('message-notifier-sub-container');//Message progress element
+    		 	         		if(resp == 'sent'){//Message sent successfully
     		 	         			v.innerHTML = 'Message sent!';
+    		 	         			//Update fields with default value/color
     		 	         			var k = doc.getElementsByClassName('contact-fields'),
     		 	         			fields = l.contactFields;
     		 	         			for(i = 0; i < k.length; i++){
     		 	         				var m = k[i];
     		 	         				var p = m.id + '';
     		 	         				m.style.color = '#acacac';
-								        m.value = p != 'captcha' ? fields[p].title : fields[p].title(1, 99);
+								        m.value = p != 'captcha' ? fields[p].val.capitalize() : fields[p].val(1, 99);
     		 	         			}
-    		 	         		}else{
+    		 	         		}else{//Message fail
     		 	         			v.style.backgroundColor = '#ff0000';
+    		 	         			//Sanitize server response before appended to DOM
     		 	         			var h, s = l.htmlEntities;
     		 	         			for(h in s){
     		 	         				resp = resp.replace(h, '&' + s[h] + ';');
@@ -425,6 +454,7 @@
     		 	         			v.innerHTML = resp;
     		 	         			enableBtn();//Enable button so user can potentially send message 
     		 	         		}
+    		 	         		//Remove notifier after 3sec
     		 	         		setTimeout(function(){
     		 	         			b.removeChild(doc.getElementById('message-notifier'));
     		 	         		},3000);
@@ -438,15 +468,20 @@
 						inputs[i].onkeyup = function(){
 							var elem = this,
 							id = elem.id
-							checkFields(elem);
-							if(id == 'message'){
+							checkFields();//Check if submit button can be disabled
+							if(id == 'message'){//Update strLen if message
 								checkMessageLen(id, elem.value);
 							}
 						}
+						//Empty error element onkeydown
 						inputs[i].onkeydown = function(){
 							doc.getElementById(this.id + '-err').innerHTML = '';
 						}
 					}
+					/*Alert user of message length
+					Message length must be > 50 before submit button can be disabled
+					@param (f) field's id
+					@param (v) string to check against*/
 					function checkMessageLen(f, v){
 						var len = v.length,
 						txtLen = doc.getElementById(f + '-len');
@@ -457,153 +492,179 @@
 							txtLen.style.color = '#ff0000';
 						}
 					}
-					function checkFields(elem){
-						var k = doc.getElementsByClassName('contact-fields'), sanitized = true;
+					/*Validated all fields, update object with fields that will be sent with
+					ajax and enable sumbit button if criteria met
+					 */
+					function checkFields(){
+						var k = doc.getElementsByClassName('contact-fields'), 
+						validate = true;//Submit button will be enabled if validate comes out 'true' after checks
 						for(var b = 0; b < k.length; b++){
-							var m = k[b].id + '';
-							var v=k[b].value + '';
-							sanitized = fields[m].keyDown(v.toLowerCase());
-							if(sanitized){
-								if(m == 'phone' && v== '' || v == l.contactFields[m].title){
+							var m = k[b].id + '';//Field id
+							var v=k[b].value + '';//Field value
+							validate = fields[m].keyDown(v.toLowerCase());//Validate field with respective validation keydown method 
+							if(validate){//Field passed validation
+							    /*Phone not required so field could have passed validation if field was empty or had default value
+							    Check if field is phone and delete previous phone property (if previously set) query string 
+							    object if current value is empty or default*/
+								if(m == 'phone' && (v == '' || v == fields[m].val)){
 									if(l.hasOwnProperty('send') && l.send.hasOwnProperty(m)){
 										delete l['send'][m];
 									}
 									continue;
 								}
-								if(m!='captcha'){
+								if(m!='captcha'){//Captcha not apart of query string
+								    //Create object if doesn't exist 
 									if(!l.hasOwnProperty('send')){
 										l.send = {};
 										l.send[m] = v;
-									}else if(l['send'][m] != v){
+									}else if(l['send'][m] != v){//set new value if different from old value
 										l['send'][m] = v;
 									}
 								}
 							}else{
+								//Delete old property if current value failed validation
 								if(l.hasOwnProperty('send') && l.send.hasOwnProperty(m)){
 									delete l['send'][m];
 								}
 								break;
 							}
 						}
-						l.btn=doc.getElementById('send');
-						if(sanitized){
+						l.btn=doc.getElementById('send');//Set send button DOM to object main object property
+						//Enable button if validate is true, disable if false
+						if(validate){
 							enableBtn()
 						}else{
 							disableBtn()
 						}
 					}
-					function enableBtn(){
+					function enableBtn(){//Enable button for submission
 						btn = l.btn;
 						btn.disabled = false;
 						btn.style.opacity = '1.0';
 		                btn.style.filter = 'alpha(opacity=100)';
 					}
-					function disableBtn(){
+					function disableBtn(){//Disable submit button
 						btn = l.btn;
 						btn.disabled=true;
 						btn.style.opacity='0.5';
 		                btn.style.filter='alpha(opacity=50)';
 					}
-					function sortTitle(id){
-						var title;
+					/*Get field's default value
+					@param (id) - field id value
+					 */
+					function sortVal(id){
+						var val;
 						if(id == 'captcha'){
-							title = fields[id].setTitle;
+							val= fields[id].setVal;
 						}else{
-							title = fields[id].title;
+							val = fields[id].val;
 						}
-						return title;
+						return val;
 					}
 				},
+				/*Form fields operations @propert (name) - name of fields 
+				@property (val) - default fields value 
+				@property (keydown) - validate fields onkeydown @param (val) - field value 
+				@property (validate) - validate fields onblur @param (val) - field value
+				@property (captcha) - set captcha that validates to the sum of two integers*/ 
 				contactFields:{
-					name:{
-						title : 'John Doe',
+					name : {
+						val : 'john',
 						keyDown : function(val){
-							return (val != '' && val != this.title.toLowerCase() && /\w/.test(val));
+							//True if @val not default value and include some letters
+							return (val != this.val && /[a-zA-Z]/.test(val));
 						},
 						validate : function(val){
 							var err;
-							if(val == '' || val == this.title){
+							if(val == '' || val == this.val){
 								err = 'You did not include a name';
-							}else if(!/[a-zA-Z]/m.test(val)){
+							}else if(!/[a-zA-Z]/.test(val)){
 								err = 'Name must have letters';
 							}
 							return err;
 						},
 					},
-					email:{
-						title : 'someone@example.com',
+					email : {
+						val : 'someone@example.com',
 						keyDown : function(val){
-							return val != this.title.toLowerCase() && /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(val);
+							//True if @val not default value and meets email convention
+							return val != this.val && /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(val);
 						},
 						validate : function(val){
 							var err;
 							if(!/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(val)){
-								err = 'Acceptable email type: ' + this.title;
+								err = 'Acceptable email type: ' + this.val;
 							}
 							return err;
 						}
 					},
 					phone : {
-						title : '000-000-000',
+						val : '000-000-000',
 						keyDown : function(val){
 							return this.checkPhoneNumber(val);
 						},
 						validate : function(val){
 							var l = this,err;
 							if(val != '' && !l.checkPhoneNumber(val)){
-								err = 'Acceptable phone number type: ' + this.title;
+								err = 'Acceptable phone number type: ' + l.val;
 							}
 							return err;
 						},
-						checkPhoneNumber : function(val){
-							if(val == '' || val == this.title) return true;
+						checkPhoneNumber : function(val){//Validates phone number
+							if(val == '' || val == this.val) return true;
 							else if(/^[0-9]{3}[0-9]{3}[0-9]{4}$/.test(val) || /^[0-9]{3}\-[0-9]{3}\-[0-9]{4}$/.test(val)) return true;
 							else return false;
 						}
 					},
 					subject : {
-						title : 'I need your help...',
+						val : 'i need your help...',
 						keyDown : function(val){
-							return (val != '' && val != this.title.toLowerCase( )&& /\w/.test(val));
+							//True if @val not default value and include some letters
+							return (val != this.val && /[a-zA-Z]/.test(val));
 					    },
 						validate : function(val){
-							var title = this.title.toLowerCase(), err;
-							if(val == title){
+							var value = this.val, err;
+							if(val == value){
 								err = 'You must include a subject';
-							}else if(!/\w/.test(val)){
+							}else if(!/[a-zA-Z]/.test(val)){
 								err = 'Subject must include letters';
 							}
 							return err;
 						}
 					},
 					message : {
-						title : 'Type message here...',
+						val : 'type message here...',
 						keyDown : function(val){
-							return (val != this.title.toLowerCase() && val.length > 50 && /\w/.test(val));
+							//True if @val not default value, > 50 and include some letters
+							return (val != this.val && val.length > 50 && /[a-zA-Z]/.test(val));
 					    },
 						validate : function(val){
-							var title = this.title.toLowerCase(), err;
-							if(val == title){
+							var err;
+							if(val == this.val){
 								err = 'You must include a message';
-							}else if(!/\w/.test(val)){
+							}else if(!/[a-zA-Z]/.test(val)){
 								err = 'Message must include letters';
 							}
 							return err
 						}
 					},
 					captcha : {
-						title : function(min,max){
+						val : function(min,max){
 							min = Math.ceil(min);
                             max = Math.floor(max);
+                            //2 random numbers to add
                             var o = Math.floor(Math.random() * (max - min + 1)) + min,
                             p = Math.floor(Math.random() * (max - min + 1)) + min,
                             l=this;
-                            var setTitle = o + '+' + p;
-                            l.result = o + p;
-                            l.setTitle = setTitle;
-                            return setTitle;
+                            //Default value
+                            //Indicate to user that values must added
+                            var setVal = o + '+' + p;
+                            l.result = o + p;//Adds numbers/value to check against
+                            l.setVal = setVal;//Property used to reset default value onblur
+                            return setVal;
 						},
 						keyDown : function(val){
+							//True if @val equals to result from adding numbers
 							return (val == this.result);
 						},
 						validate : function(val){
@@ -615,19 +676,19 @@
 						}
 					}
 				},
-				encodeData:function(data){
-					return encodeURIComponent(data).replace(/[!'()*]/g, function(c){
+				encodeData:function(d){//Encode @param (d)
+					return encodeURIComponent(d).replace(/[!'()*]/g, function(c){
 						return '%' + c.charCodeAt(0).toString(16);
                     });
                 },
-                htmlEntities : {
+                htmlEntities : {//Replaces html characters with respective properties
                 	'<' : 'lt',
                 	'>' : 'gt', 
                 	"'" : '#39',
                 	'"' : 'quot',
                 	'&' : 'amp'
                 }
-			},window,history.pushState?true:false);
+            },window,history.pushState?true:false);
 			
 			//-->
 		</script>
